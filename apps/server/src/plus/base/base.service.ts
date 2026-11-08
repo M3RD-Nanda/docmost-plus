@@ -6,6 +6,7 @@ import {
 import { InjectKysely } from 'nestjs-kysely';
 import { KyselyDB } from '@docmost/db/types/kysely.types';
 import { PageAccessService } from '../../core/page/page-access/page-access.service';
+import { PagePermissionRepo } from '@docmost/db/repos/page/page-permission.repo';
 import { User, Workspace } from '@docmost/db/types/entity.types';
 import { sql } from 'kysely';
 
@@ -38,6 +39,7 @@ export class BaseService {
   constructor(
     @InjectKysely() private readonly db: KyselyDB,
     private readonly pageAccess: PageAccessService,
+    private readonly pagePermissionRepo: PagePermissionRepo,
   ) {}
 
   private async assertPage(pageId: string, workspace: Workspace, user: User, edit = false) {
@@ -293,5 +295,64 @@ export class BaseService {
       .executeTakeFirst();
     if (!Number(res?.numUpdatedRows ?? 0)) throw new NotFoundException('View tidak ditemukan');
     return { updated: true };
+  }
+
+  /** Tandai halaman biasa menjadi Bases (atau sebaliknya). */
+  async setBase(pageId: string, workspace: Workspace, user: User, isBase: boolean) {
+    await this.assertPage(pageId, workspace, user, true);
+    await this.db
+      .updateTable('pages')
+      .set({ isBase } as never)
+      .where('id', '=', pageId)
+      .where('workspaceId', '=', workspace.id)
+      .execute();
+
+    // View default supaya UI langsung punya tempat menyimpan konfigurasi kolom.
+    if (isBase) {
+      const existing = await this.db
+        .selectFrom('baseViews')
+        .select('id')
+        .where('pageId', '=', pageId)
+        .executeTakeFirst();
+      if (!existing) {
+        await this.db
+          .insertInto('baseViews')
+          .values({
+            pageId,
+            name: 'Tabel',
+            type: 'table',
+            position: this.position(),
+            config: {} as never,
+            workspaceId: workspace.id,
+            creatorId: user.id,
+          })
+          .execute();
+      }
+    }
+
+    return { isBase };
+  }
+
+  /** Daftar halaman Bases yang bisa diakses user. */
+  async listBasePages(workspace: Workspace, user: User) {
+    const rows = await this.db
+      .selectFrom('pages')
+      .select(['id', 'title', 'slugId', 'spaceId', 'updatedAt'])
+      .where('workspaceId', '=', workspace.id)
+      .where('isBase', '=', true)
+      .where('deletedAt', 'is', null)
+      .orderBy('updatedAt', 'desc')
+      .limit(100)
+      .execute();
+
+    if (!rows.length) return [];
+
+    const accessible = await this.pagePermissionRepo.filterAccessiblePageIds({
+      pageIds: rows.map((r) => r.id),
+      userId: user.id,
+      spaceId: null,
+    });
+    const allowed = new Set(accessible);
+    return rows.filter((r) => allowed.has(r.id));
   }
 }

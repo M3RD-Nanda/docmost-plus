@@ -72,7 +72,9 @@ const WorkspaceApiKeys = lazyWithPrefetch(
   () => import("@/ee/api-key/pages/workspace-api-keys"),
 );
 const AiSettings = lazyWithPrefetch(() => import("@/ee/ai/pages/ai-settings.tsx"));
-const BasePage = lazyWithPrefetch(() => import("@/ee/base/pages/base-page.tsx"));
+const BasePage = lazyWithPrefetch(() => import("@/pages/base/base-page"));
+// plus: daftar basis
+const BaseListPage = lazyWithPrefetch(() => import("@/pages/base/base-list"));
 const AuditLogs = lazyWithPrefetch(() => import("@/ee/audit/pages/audit-logs.tsx"));
 const VerifiedPages = lazyWithPrefetch(
   () => import("@/ee/page-verification/pages/verified-pages.tsx"),
@@ -178,6 +180,7 @@ export default function App() {
           />
 
           <Route path={"/base/:pageId"} element={<BasePage />} />
+          <Route path={"/bases"} element={<BaseListPage />} />
 
           <Route path={"/settings"}>
             <Route path={"account/profile"} element={<AccountSettings />} />

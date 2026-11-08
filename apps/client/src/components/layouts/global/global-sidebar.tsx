@@ -46,6 +46,8 @@ export default function GlobalSidebar() {
     },
     // plus: asisten AI di atas wiki
     { label: "Tanya Wiki", icon: IconSparkles, path: "/ai" },
+    // plus: basis (tabel/kanban)
+    { label: "Basis", icon: IconLayoutGrid, path: "/bases" },
   ];
   const { data: favoriteSpacesData, isPending: isFavoritesPending } = useFavoritesQuery("space");
   const favoriteSpaces = favoriteSpacesData?.pages.flatMap((p) => p.items) ?? [];
