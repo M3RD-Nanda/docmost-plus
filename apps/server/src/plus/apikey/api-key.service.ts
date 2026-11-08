@@ -16,12 +16,17 @@ import { isUserDisabled } from '../../common/helpers';
 type ApiKeyRow = {
   id: string;
   name: string | null;
-  creator_id: string;
-  workspace_id: string;
-  expires_at: Date | string | null;
-  last_used_at: Date | string | null;
-  created_at: Date | string;
-  deleted_at: Date | string | null;
+  creator_id?: string;
+  workspace_id?: string;
+  expires_at?: Date | string | null;
+  expiresAt?: Date | string | null;
+  last_used_at?: Date | string | null;
+  lastUsedAt?: Date | string | null;
+  created_at?: Date | string;
+  createdAt?: Date | string;
+  deleted_at?: Date | string | null;
+  deletedAt?: Date | string | null;
+  [key: string]: unknown;
 };
 
 @Injectable()
