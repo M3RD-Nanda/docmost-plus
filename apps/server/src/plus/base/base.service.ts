@@ -94,7 +94,9 @@ export class BaseService {
     if (!ALLOWED_TYPES.includes(dto.type)) {
       throw new BadRequestException(`Tipe tidak didukung: ${dto.type}`);
     }
-    const id = (dto.id || `st_${Math.random().toString(36).slice(2, 10)}`).trim();
+    // id tanpa underscore: kunci JSONB dibaca balik dalam camelCase oleh Kysely,
+    // jadi id snake_case akan tampak "hilang" di UI.
+    const id = (dto.id || `st${Math.random().toString(36).slice(2, 10)}`).trim();
     if (!/^[a-zA-Z0-9_]{2,40}$/.test(id)) {
       throw new BadRequestException('id properti hanya huruf, angka, underscore (2–40)');
     }

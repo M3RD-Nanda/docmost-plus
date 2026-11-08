@@ -34,6 +34,11 @@ import {
   type BaseRow,
 } from "@/features/plus/base-api";
 
+// Kysely CamelCasePlugin mengubah kunci JSONB saat dibaca (st_ab → stAb).
+// Semua akses sel harus lewat helper ini supaya konsisten baca/tulis.
+const camel = (s: string) => s.replace(/_([a-z0-9])/g, (_, c: string) => c.toUpperCase());
+const getCell = (cells: Record<string, any>, id: string) => cells[camel(id)] ?? cells[id];
+
 const TYPES = [
   { value: "text", label: "Teks" },
   { value: "number", label: "Angka" },
@@ -80,7 +85,7 @@ export default function BasePage() {
   }, [pageId]);
 
   async function saveCell(row: BaseRow, propId: string, value: unknown) {
-    const cells = { ...row.cells, [propId]: value };
+    const cells = { ...row.cells, [camel(propId)]: value };
     setRows((prev) => prev.map((r) => (r.id === row.id ? { ...r, cells } : r)));
     try {
       await patchRow(pageId, row.id, cells);
@@ -129,7 +134,7 @@ export default function BasePage() {
     const options = groupProp.typeOptions?.options?.map((o) => o.name) ?? [];
     const names = new Set<string>(options);
     rows.forEach((r) => {
-      const v = r.cells[groupProp.id];
+      const v = getCell(r.cells, groupProp.id);
       if (typeof v === "string" && v) names.add(v);
     });
     return [...names];
@@ -219,7 +224,7 @@ export default function BasePage() {
                       <Table.Td key={p.id}>
                         <CellEditor
                           property={p}
-                          value={row.cells[p.id]}
+                          value={getCell(row.cells, p.id)}
                           onSave={(v) => saveCell(row, p.id, v)}
                         />
                       </Table.Td>
@@ -270,12 +275,12 @@ export default function BasePage() {
                     {group}
                   </Text>
                   <Badge size="xs" variant="light">
-                    {rows.filter((r) => r.cells[groupProp?.id ?? ""] === group).length}
+                    {rows.filter((r) => getCell(r.cells, groupProp?.id ?? "") === group).length}
                   </Badge>
                 </Group>
                 <Stack gap="xs">
                   {rows
-                    .filter((r) => (groupProp ? r.cells[groupProp.id] === group : false))
+                    .filter((r) => (groupProp ? getCell(r.cells, groupProp.id) === group : false))
                     .map((row) => (
                       <Card
                         key={row.id}
@@ -285,7 +290,7 @@ export default function BasePage() {
                         onDragStart={(e) => e.dataTransfer.setData("text/row-id", row.id)}
                       >
                         <Text size="sm">
-                          {String(row.cells[properties.find((p) => p.type === "text")?.id ?? ""] ?? "(kosong)")}
+                          {String(getCell(row.cells, properties.find((p) => p.type === "text")?.id ?? "") ?? "(kosong)")}
                         </Text>
                       </Card>
                     ))}
