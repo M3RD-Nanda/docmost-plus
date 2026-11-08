@@ -261,11 +261,23 @@ export class MfaService {
   }
 
   private async findRow(userId: string): Promise<MfaRow | undefined> {
-    return this.table()
+    const raw = await this.table()
       .selectFrom('user_mfa')
       .selectAll()
       .where('user_id', '=', userId)
-      .executeTakeFirst() as Promise<MfaRow | undefined>;
+      .executeTakeFirst();
+    if (!raw) return undefined;
+
+    // Kysely di Docmost memakai CamelCasePlugin: hasil keluar sebagai isEnabled,
+    // backupCodes, dst. Normalisasi di satu tempat.
+    return {
+      id: raw.id,
+      user_id: raw.user_id ?? raw.userId,
+      method: raw.method,
+      secret: raw.secret ?? null,
+      is_enabled: raw.is_enabled ?? raw.isEnabled ?? false,
+      backup_codes: raw.backup_codes ?? raw.backupCodes ?? null,
+    };
   }
 
   // ponytail: cast `any` karena tipe DB upstream belum memuat tabel user_mfa.

@@ -50,7 +50,10 @@ export class ApiKeyService {
       .executeTakeFirst()) as ApiKeyRow | undefined;
 
     if (!row) throw new UnauthorizedException('API key tidak dikenal');
-    if (row.expires_at && new Date(row.expires_at).getTime() < Date.now()) {
+
+    // CamelCasePlugin: kolom kembali sebagai camelCase.
+    const expiresAt = row.expires_at ?? row.expiresAt ?? null;
+    if (expiresAt && new Date(expiresAt).getTime() < Date.now()) {
       throw new UnauthorizedException('API key sudah kedaluwarsa');
     }
 
