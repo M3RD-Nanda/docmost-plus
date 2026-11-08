@@ -31,6 +31,8 @@ import { NoopAuditModule } from './integrations/audit/audit.module';
 import { ThrottleModule } from './integrations/throttle/throttle.module';
 import { OutboundModule } from './integrations/outbound/outbound.module';
 import { EncryptionModule } from './integrations/encryption/encryption.module';
+// plus: modul fitur Docmost Plus (MFA, API key, dst.)
+import { PlusModule } from './plus/plus.module';
 
 const enterpriseModules = [];
 try {
@@ -58,6 +60,8 @@ try {
     DatabaseModule,
     EnvironmentModule,
     EncryptionModule,
+    // plus: fitur kita (MFA, API key). Harus setelah CoreModule.
+    PlusModule,
     RedisModule.forRootAsync({
       useClass: RedisConfigService,
     }),

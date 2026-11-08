@@ -101,7 +101,8 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
 
     try {
       // eslint-disable-next-line @typescript-eslint/no-require-imports
-      ApiKeyModule = require('./../../../ee/api-key/api-key.service');
+      // plus: API key dilayani modul kita sendiri, bukan ee/
+      ApiKeyModule = require('./../../../plus/apikey/api-key.service');
       isApiKeyModuleReady = true;
     } catch (err) {
       this.logger.debug(
