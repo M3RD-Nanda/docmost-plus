@@ -66,6 +66,8 @@ const UserApiKeys = lazyWithPrefetch(() => import("@/pages/settings/account/api-
 const MfaSettings = lazyWithPrefetch(() => import("@/pages/settings/account/mfa-settings"));
 // plus: halaman SSO OIDC
 const SsoProviders = lazyWithPrefetch(() => import("@/pages/settings/workspace/sso-providers"));
+// plus: asisten AI
+const AiChatPage = lazyWithPrefetch(() => import("@/pages/ai/ai-chat"));
 const WorkspaceApiKeys = lazyWithPrefetch(
   () => import("@/ee/api-key/pages/workspace-api-keys"),
 );
@@ -80,7 +82,7 @@ const TemplateEditor = lazyWithPrefetch(
   () => import("@/ee/template/pages/template-editor"),
 );
 const FavoritesPage = lazyWithPrefetch(() => import("@/pages/favorites/favorites-page"));
-const AiChat = lazyWithPrefetch(() => import("@/ee/ai-chat/pages/ai-chat.tsx"));
+// plus: rute /ai memakai halaman kita; deklarasi lazy EE dihapus
 const VerifyEmail = lazyWithPrefetch(() => import("@/ee/pages/verify-email.tsx"));
 const LabelPage = lazyWithPrefetch(() => import("@/pages/label/label-page"));
 const OAuthConsent = lazyWithPrefetch(() => import("@/ee/oauth/pages/oauth-consent.tsx"));
@@ -158,8 +160,8 @@ export default function App() {
 
         <Route element={<Layout />}>
           <Route path={"/home"} element={<Home />} />
-          <Route path={"/ai"} element={<AiChat />} />
-          <Route path={"/ai/chat/:chatId"} element={<AiChat />} />
+          <Route path={"/ai"} element={<AiChatPage />} />
+          <Route path={"/ai/chat/:chatId"} element={<AiChatPage />} />
           <Route path={"/spaces"} element={<SpacesPage />} />
           <Route path={"/favorites"} element={<FavoritesPage />} />
           <Route path={"/labels/:labelName"} element={<LabelPage />} />

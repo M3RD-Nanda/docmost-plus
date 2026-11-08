@@ -8,6 +8,7 @@ import {
   IconSettings,
   IconUserPlus,
   IconTemplate,
+  IconSparkles,
 } from "@tabler/icons-react";
 import { Link, useLocation } from "react-router-dom";
 import classes from "./global-sidebar.module.css";
@@ -43,6 +44,8 @@ export default function GlobalSidebar() {
       path: "/templates",
       disabled: !hasTemplates,
     },
+    // plus: asisten AI di atas wiki
+    { label: "Tanya Wiki", icon: IconSparkles, path: "/ai" },
   ];
   const { data: favoriteSpacesData, isPending: isFavoritesPending } = useFavoritesQuery("space");
   const favoriteSpaces = favoriteSpacesData?.pages.flatMap((p) => p.items) ?? [];
