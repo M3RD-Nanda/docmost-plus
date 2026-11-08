@@ -96,8 +96,8 @@ Semua kode fitur baru hidup di: `apps/server/src/plus/<fitur>/` dan `apps/client
 - Batas: mermaid dirender client-side; render server (PDF/print) menyusul bila dibutuhkan.
 
 ### F5 — Pencarian lampiran PDF/DOCX
-- ✔ Infrastruktur **sudah lengkap**: kolom `attachments.text_content` + `tsv` + GIN index, queue `ATTACHMENT_QUEUE`, job `ATTACHMENT_INDEX_CONTENT`, enqueue otomatis di `attachment.service.ts:119`, dan handler di `attachment.processor.ts:37` yang memanggil modul EE.
-- Yang baru hanya **ekstraktor**: `plus/attachment-index/` mengekspor `AttachmentEeService` dengan `indexAttachment(attachmentId)` + `indexAttachments(workspaceId)` → unduh objek, ekstraksi teks (`pdf-parse`, `mammoth`, `officeparser`), `UPDATE attachments SET text_content=…, tsv=to_tsvector('simple', …)`. Estimasi 1–2 hari.
+- ✔ Koreksi saat implementasi: `core/search/search.service.ts` **tidak** membaca `attachments.text_content` (kolom itu di sana milik tabel `pages`), jadi pencarian lampiran butuh endpoint sendiri. Queue `ATTACHMENT_QUEUE` + job `ATTACHMENT_INDEX_CONTENT` + kolom `tsv` tetap sudah ada.
+- ✔ Selesai: `plus/attachment-index/attachment-index.service.ts` (ekstraktor: pdf-parse, mammoth, teks polos) + `attachment-search.service.ts` (`GET /plus/search/attachments?q=`, ts_headline + filter `PagePermissionRepo`). Terverifikasi di staging: unggah .txt/.docx → `tsv` terisi → 4/4 kueri mengembalikan berkas dengan cuplikan bertanda.
 - Query: `plus/search/attachment-search.controller.ts` → `GET /plus/search/attachments?q=` memakai `tsv @@ plainto_tsquery`, ranking `ts_rank`, filter `workspace_id` + permission halaman induk.
 - Backfill: CLI `pnpm plus:index-attachments` untuk 0 lampiran lama.
 - Batas: OCR scan tidak termasuk (butuh tesseract; tambah belakangan bila perlu).
