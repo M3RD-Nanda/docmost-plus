@@ -123,7 +123,9 @@
     "undici": "7.30.1",
     "ws": "8.21.3",
     "yauzl": "3.4.0",
-    "zod": "4.6.7"
+    "zod": "4.6.7",
+    "qrcode": "1.5.4",
+    "pdf-parse": "^1.1.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.28.0",
@@ -154,7 +156,8 @@
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.57.1"
+    "typescript-eslint": "^8.57.1",
+    "@types/qrcode": "1.5.6"
   },
   "jest": {
     "moduleFileExtensions": [

@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Get,
   HttpCode,
   HttpStatus,
   Post,
@@ -22,6 +23,12 @@ export class MfaController {
     private readonly mfaService: MfaService,
     private readonly environmentService: EnvironmentService,
   ) {}
+
+  @UseGuards(JwtAuthGuard)
+  @Get('status')
+  async status(@AuthUser() user: User) {
+    return { enabled: await this.mfaService.isEnabled(user.id) };
+  }
 
   @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
@@ -59,11 +66,10 @@ export class MfaController {
   @HttpCode(HttpStatus.OK)
   @Post('verify')
   async verify(
-    @AuthWorkspace() workspace: Workspace,
     @Body() dto: VerifyMfaDto,
     @Res({ passthrough: true }) res: FastifyReply,
   ) {
-    const { authToken } = await this.mfaService.verify(dto, workspace);
+    const { authToken } = await this.mfaService.verify(dto);
 
     res.setCookie('authToken', authToken, {
       httpOnly: true,

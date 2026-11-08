@@ -492,6 +492,14 @@ const CommandGroups: SlashMenuGroupedItemsType = {
         editor.chain().focus().deleteRange(range).setDrawio().run(),
     },
     {
+      title: "Mermaid (diagram teks)",
+      description: "Insert a Mermaid diagram from text",
+      searchTerms: ["mermaid", "diagram", "flowchart", "graph", "sequence"],
+      icon: IconMermaid,
+      command: ({ editor, range }: CommandProps) =>
+        editor.chain().focus().deleteRange(range).setMermaid().run(),
+    },
+    {
       title: "Excalidraw (Whiteboard)",
       description: "Draw and sketch excalidraw diagrams",
       searchTerms: ["diagrams", "draw", "sketch", "whiteboard"],

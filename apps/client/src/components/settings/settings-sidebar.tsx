@@ -75,7 +75,12 @@ const groupedData: DataGroup[] = [
         label: "API keys",
         icon: IconKey,
         path: "/settings/account/api-keys",
-        feature: Feature.API_KEYS,
+      },
+      {
+        // plus: keamanan dua langkah (MFA)
+        label: "Keamanan (MFA)",
+        icon: IconShieldCheck,
+        path: "/settings/account/mfa",
       },
       {
         label: "Connections",

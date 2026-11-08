@@ -1,4 +1,4 @@
-import { IsEmail, IsNotEmpty, IsString, Length, MaxLength } from 'class-validator';
+import { IsNotEmpty, IsString, Length, MaxLength } from 'class-validator';
 
 export class EnableMfaDto {
   @IsNotEmpty()
@@ -16,12 +16,8 @@ export class MfaCodeDto {
 
 export class VerifyMfaDto {
   @IsNotEmpty()
-  @IsEmail()
-  email: string;
-
-  @IsNotEmpty()
   @IsString()
-  password: string;
+  mfaToken: string;
 
   @IsNotEmpty()
   @IsString()

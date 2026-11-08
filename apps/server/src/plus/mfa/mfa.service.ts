@@ -12,6 +12,7 @@ import { UserRepo } from '@docmost/db/repos/user/user.repo';
 import { User, Workspace } from '@docmost/db/types/entity.types';
 import { createHash } from 'node:crypto';
 import { LoginDto } from '../../core/auth/dto/login.dto';
+import { TokenService } from '../../core/auth/services/token.service';
 import { SessionService } from '../../core/session/session.service';
 import { EnvironmentService } from '../../integrations/environment/environment.service';
 import { comparePasswordHash, isUserDisabled } from '../../common/helpers';
@@ -49,6 +50,10 @@ export class MfaService {
     private readonly moduleRef: ModuleRef,
   ) {}
 
+  private get tokenService(): TokenService {
+    return this.moduleRef.get(TokenService, { strict: false });
+  }
+
   private get sessionService(): SessionService {
     return this.moduleRef.get(SessionService, { strict: false });
   }
@@ -71,6 +76,7 @@ export class MfaService {
     requiresMfaSetup: boolean;
     isMfaEnforced: boolean;
     authToken?: string;
+    mfaToken?: string;
   } | null> {
     const user = await this.userRepo.findByEmail(loginInput.email, workspace.id, {
       includePassword: true,
@@ -88,7 +94,12 @@ export class MfaService {
     const isMfaEnforced = Boolean((workspace as Workspace & { enforceMfa?: boolean }).enforceMfa);
 
     if (row?.is_enabled) {
-      return { userHasMfa: true, requiresMfaSetup: false, isMfaEnforced };
+      return {
+        userHasMfa: true,
+        requiresMfaSetup: false,
+        isMfaEnforced,
+        mfaToken: await this.tokenService.generateMfaToken(user, workspace.id),
+      };
     }
 
     if (isMfaEnforced) {
@@ -134,14 +145,29 @@ export class MfaService {
         .execute();
     }
 
+    const otpauth = otpauthUrl({
+      secret,
+      account: user.email,
+      issuer: `${ISSUER} (${workspace.name ?? workspace.hostname ?? 'workspace'})`,
+    });
+
     return {
       manualKey: secret,
-      otpauthUrl: otpauthUrl({
-        secret,
-        account: user.email,
-        issuer: `${ISSUER} (${workspace.name ?? workspace.hostname ?? 'workspace'})`,
-      }),
+      otpauthUrl: otpauth,
+      qrCodeDataUrl: await this.qrDataUrl(otpauth),
     };
+  }
+
+  /** QR sebagai data URL supaya klien tidak perlu pustaka QR sendiri. */
+  private async qrDataUrl(url: string): Promise<string | null> {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const QRCode = require('qrcode');
+      return await QRCode.toDataURL(url, { margin: 1, width: 240 });
+    } catch (err) {
+      this.logger.warn(`QR gagal dibuat: ${(err as Error).message}`);
+      return null;
+    }
   }
 
   async enable(user: User, workspace: Workspace, code: string) {
@@ -201,22 +227,12 @@ export class MfaService {
     return { backupCodes };
   }
 
-  /**
-   * Langkah kedua login: email + sandi + kode → sesi penuh.
-   * Core hanya mengembalikan flag `userHasMfa`, bukan token setengah jadi,
-   * jadi kredensial divalidasi ulang di sini (constant-ish cost, satu query).
-   */
-  async verify(
-    dto: { email: string; password: string; code: string },
-    workspace: Workspace,
-  ) {
-    const user = await this.userRepo.findByEmail(dto.email, workspace.id, {
-      includePassword: true,
-    });
+  /** Langkah kedua login: mfaToken (5 menit) + kode → sesi penuh. */
+  async verify(dto: { mfaToken: string; code: string }) {
+    const payload = await this.tokenService.verifyJwt(dto.mfaToken, 'mfa_token');
+
+    const user = await this.userRepo.findById(payload.sub, payload.workspaceId);
     if (!user || isUserDisabled(user)) {
-      throw new UnauthorizedException('Kode MFA tidak valid');
-    }
-    if (!(await comparePasswordHash(dto.password, user.password))) {
       throw new UnauthorizedException('Kode MFA tidak valid');
     }
 

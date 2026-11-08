@@ -57,18 +57,13 @@ const PublicSpaceDirectoryPage = lazyWithPrefetch(
   () => import("@/pages/public-space/public-space-directory-page.tsx"),
 );
 const SpacesPage = lazyWithPrefetch(() => import("@/pages/spaces/spaces.tsx"));
-const MfaChallengePage = lazyWithPrefetch(() =>
-  import("@/ee/mfa/pages/mfa-challenge-page").then((m) => ({
-    default: m.MfaChallengePage,
-  })),
-);
-const MfaSetupRequiredPage = lazyWithPrefetch(() =>
-  import("@/ee/mfa/pages/mfa-setup-required-page").then((m) => ({
-    default: m.MfaSetupRequiredPage,
-  })),
-);
+// plus: halaman MFA & API key versi kita (bukan ee/)
+const MfaChallengePage = lazyWithPrefetch(() => import("@/pages/auth/mfa-challenge"));
+const MfaSetupRequiredPage = lazyWithPrefetch(() => import("@/pages/auth/mfa-setup-required"));
 const SpaceTrash = lazyWithPrefetch(() => import("@/pages/space/space-trash.tsx"));
-const UserApiKeys = lazyWithPrefetch(() => import("@/ee/api-key/pages/user-api-keys"));
+const UserApiKeys = lazyWithPrefetch(() => import("@/pages/settings/account/api-keys"));
+// plus: halaman keamanan (MFA)
+const MfaSettings = lazyWithPrefetch(() => import("@/pages/settings/account/mfa-settings"));
 const WorkspaceApiKeys = lazyWithPrefetch(
   () => import("@/ee/api-key/pages/workspace-api-keys"),
 );
@@ -187,6 +182,7 @@ export default function App() {
               element={<AccountPreferences />}
             />
             <Route path={"account/api-keys"} element={<UserApiKeys />} />
+            <Route path={"account/mfa"} element={<MfaSettings />} />
             <Route
               path={"account/api-keys/authorized-apps"}
               element={<UserApiKeys />}

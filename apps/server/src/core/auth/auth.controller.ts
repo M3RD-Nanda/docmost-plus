@@ -92,6 +92,8 @@ export class AuthController {
             userHasMfa: mfaResult.userHasMfa,
             requiresMfaSetup: mfaResult.requiresMfaSetup,
             isMfaEnforced: mfaResult.isMfaEnforced,
+            // plus: token tantangan agar klien tidak perlu menyimpan sandi
+            mfaToken: mfaResult.mfaToken,
           };
         } else if (mfaResult.authToken) {
           // User doesn't have MFA and workspace doesn't require it
