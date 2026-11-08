@@ -12,7 +12,6 @@ import { UserRepo } from '@docmost/db/repos/user/user.repo';
 import { User, Workspace } from '@docmost/db/types/entity.types';
 import { createHash } from 'node:crypto';
 import { LoginDto } from '../../core/auth/dto/login.dto';
-import { TokenService } from '../../core/auth/services/token.service';
 import { SessionService } from '../../core/session/session.service';
 import { EnvironmentService } from '../../integrations/environment/environment.service';
 import { comparePasswordHash, isUserDisabled } from '../../common/helpers';
@@ -49,10 +48,6 @@ export class MfaService {
     private readonly userRepo: UserRepo,
     private readonly moduleRef: ModuleRef,
   ) {}
-
-  private get tokenService(): TokenService {
-    return this.moduleRef.get(TokenService, { strict: false });
-  }
 
   private get sessionService(): SessionService {
     return this.moduleRef.get(SessionService, { strict: false });
@@ -206,20 +201,30 @@ export class MfaService {
     return { backupCodes };
   }
 
-  /** Langkah kedua login: tukar mfaToken + kode menjadi sesi penuh. */
-  async verify(mfaToken: string, code: string) {
-    const payload = await this.tokenService.verifyJwt(mfaToken, 'mfa_token');
-
-    const user = await this.userRepo.findById(payload.sub, payload.workspaceId);
+  /**
+   * Langkah kedua login: email + sandi + kode → sesi penuh.
+   * Core hanya mengembalikan flag `userHasMfa`, bukan token setengah jadi,
+   * jadi kredensial divalidasi ulang di sini (constant-ish cost, satu query).
+   */
+  async verify(
+    dto: { email: string; password: string; code: string },
+    workspace: Workspace,
+  ) {
+    const user = await this.userRepo.findByEmail(dto.email, workspace.id, {
+      includePassword: true,
+    });
     if (!user || isUserDisabled(user)) {
-      throw new UnauthorizedException();
+      throw new UnauthorizedException('Kode MFA tidak valid');
+    }
+    if (!(await comparePasswordHash(dto.password, user.password))) {
+      throw new UnauthorizedException('Kode MFA tidak valid');
     }
 
     const row = await this.findRow(user.id);
     if (!row?.is_enabled || !row.secret) {
       throw new UnauthorizedException('MFA tidak aktif');
     }
-    if (!(await this.consumeCode(user.id, row, code))) {
+    if (!(await this.consumeCode(user.id, row, dto.code))) {
       throw new UnauthorizedException('Kode MFA tidak valid');
     }
 

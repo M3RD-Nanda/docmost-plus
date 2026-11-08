@@ -59,10 +59,11 @@ export class MfaController {
   @HttpCode(HttpStatus.OK)
   @Post('verify')
   async verify(
+    @AuthWorkspace() workspace: Workspace,
     @Body() dto: VerifyMfaDto,
     @Res({ passthrough: true }) res: FastifyReply,
   ) {
-    const { authToken } = await this.mfaService.verify(dto.mfaToken, dto.code);
+    const { authToken } = await this.mfaService.verify(dto, workspace);
 
     res.setCookie('authToken', authToken, {
       httpOnly: true,
