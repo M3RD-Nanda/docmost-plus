@@ -16,6 +16,13 @@ type Citation = { pageId: string; title: string; slugId: string; spaceId: string
 const MAX_PAGES = 8;
 const MAX_CHARS_PER_PAGE = 1800;
 
+const STOPWORDS = new Set([
+  'apa','itu','yang','dan','di','ke','dari','untuk','dengan','adalah','siapa','berapa',
+  'bagaimana','kapan','dimana','mana','saja','dalam','pada','ini','ada','bisa','jelaskan',
+  'sebutkan','tolong','saya','kami','kita','mereka','the','is','are','what','who','how',
+  'and','or','of','to','in','for','with','this','that','a','an','do','does',
+]);
+
 /**
  * AI tanya-jawab di atas wiki (RAG sederhana).
  * - Retrieval: full-text Postgres yang sudah ada (tsv) + filter hak akses halaman.
@@ -48,13 +55,25 @@ export class AiService {
     const q = (query ?? '').trim().slice(0, 300);
     if (q.length < 2) return { pages: [] as Citation[], context: '' };
 
+    // ponytail: plainto_tsquery = AND, kalimat panjang tak pernah cocok.
+    // Ambil kata kunci bermakna lalu gabung dengan OR + prefix match.
+    const words = q
+      .toLowerCase()
+      .replace(/[^\p{L}\p{N}\s]/gu, ' ')
+      .split(/\s+/)
+      .filter((w) => w.length > 2 && !STOPWORDS.has(w))
+      .slice(0, 6);
+    if (!words.length) return { pages: [] as Citation[], context: '' };
+
+    const tsQuery = words.map((w) => `${w}:*`).join(' | ');
+
     const rows = await this.db
       .selectFrom('pages')
       .select(['id', 'title', 'slugId', 'spaceId', 'textContent'])
       .where('workspaceId', '=', workspace.id)
       .where('deletedAt', 'is', null)
-      .where(sql<boolean>`tsv @@ plainto_tsquery('simple', ${q})`)
-      .orderBy(sql`ts_rank(tsv, plainto_tsquery('simple', ${q}))`, 'desc')
+      .where(sql<boolean>`tsv @@ to_tsquery('simple', ${tsQuery})`)
+      .orderBy(sql`ts_rank(tsv, to_tsquery('simple', ${tsQuery}))`, 'desc')
       .limit(MAX_PAGES)
       .execute();
 
