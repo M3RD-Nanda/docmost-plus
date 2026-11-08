@@ -103,10 +103,10 @@ const groupedData: DataGroup[] = [
         env: "cloud",
       },
       {
+        // plus: halaman SSO OIDC milik kita (tanpa gerbang fitur EE)
         label: "Security & SSO",
         icon: IconLock,
-        path: "/settings/security",
-        feature: Feature.SECURITY_SETTINGS,
+        path: "/settings/sso",
         role: "admin",
       },
       { label: "Groups", icon: IconUsersGroup, path: "/settings/groups" },

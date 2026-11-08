@@ -64,6 +64,8 @@ const SpaceTrash = lazyWithPrefetch(() => import("@/pages/space/space-trash.tsx"
 const UserApiKeys = lazyWithPrefetch(() => import("@/pages/settings/account/api-keys"));
 // plus: halaman keamanan (MFA)
 const MfaSettings = lazyWithPrefetch(() => import("@/pages/settings/account/mfa-settings"));
+// plus: halaman SSO OIDC
+const SsoProviders = lazyWithPrefetch(() => import("@/pages/settings/workspace/sso-providers"));
 const WorkspaceApiKeys = lazyWithPrefetch(
   () => import("@/ee/api-key/pages/workspace-api-keys"),
 );
@@ -183,6 +185,7 @@ export default function App() {
             />
             <Route path={"account/api-keys"} element={<UserApiKeys />} />
             <Route path={"account/mfa"} element={<MfaSettings />} />
+            <Route path={"sso"} element={<SsoProviders />} />
             <Route
               path={"account/api-keys/authorized-apps"}
               element={<UserApiKeys />}
