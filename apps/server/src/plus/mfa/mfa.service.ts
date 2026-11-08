@@ -82,10 +82,15 @@ export class MfaService {
       loginInput.password,
       user.password,
     );
+    this.logger.debug(`checkMfaRequirements passwordMatch=${isPasswordMatch}`);
     if (!isPasswordMatch) return null;
 
     const row = await this.findRow(user.id);
     const isMfaEnforced = Boolean((workspace as Workspace & { enforceMfa?: boolean }).enforceMfa);
+    // plus: jejak diagnosis; aman (tanpa data sensitif). Hapus saat P1 stabil.
+    this.logger.debug(
+      `checkMfaRequirements user=${user.id} hasPassword=${Boolean(user.password)} rowFound=${Boolean(row)} rowEnabled=${row?.is_enabled} enforced=${isMfaEnforced}`,
+    );
 
     if (row?.is_enabled) {
       return { userHasMfa: true, requiresMfaSetup: false, isMfaEnforced };
