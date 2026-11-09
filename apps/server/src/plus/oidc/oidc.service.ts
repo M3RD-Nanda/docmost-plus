@@ -16,6 +16,7 @@ import * as jwt from 'jsonwebtoken';
 import { randomBytes, randomUUID } from 'node:crypto';
 import { EnvironmentService } from '../../integrations/environment/environment.service';
 import { SessionService } from '../../core/session/session.service';
+import { decryptSecret, encryptSecret } from '../mfa/mfa-crypto';
 
 type ProviderRow = {
   id: string;
@@ -146,7 +147,7 @@ export class OidcService {
         type: 'oidc',
         oidc_issuer: dto.issuer.replace(/\/$/, ''),
         oidc_client_id: dto.clientId,
-        oidc_client_secret: dto.clientSecret,
+        oidc_client_secret: encryptSecret(dto.clientSecret, this.stateSecret),
         allow_signup: Boolean(dto.allowSignup),
         is_enabled: true,
         workspace_id: workspace.id,
@@ -164,7 +165,7 @@ export class OidcService {
     if (dto.name !== undefined) patch.name = dto.name;
     if (dto.issuer !== undefined) patch.oidc_issuer = dto.issuer.replace(/\/$/, '');
     if (dto.clientId !== undefined) patch.oidc_client_id = dto.clientId;
-    if (dto.clientSecret) patch.oidc_client_secret = dto.clientSecret;
+    if (dto.clientSecret) patch.oidc_client_secret = encryptSecret(dto.clientSecret, this.stateSecret);
     if (dto.allowSignup !== undefined) patch.allow_signup = dto.allowSignup;
     if (dto.isEnabled !== undefined) patch.is_enabled = dto.isEnabled;
     patch.updated_at = new Date();
@@ -188,6 +189,17 @@ export class OidcService {
       .executeTakeFirst();
     if (!Number(res?.numDeletedRows ?? 0)) throw new NotFoundException('Provider tidak ditemukan');
     return { deleted: true };
+  }
+
+  /** Secret bisa tersimpan terenkripsi (format v1:…) atau plaintext (data lama). */
+  private clientSecretOf(provider: ProviderRow): string {
+    const raw = provider.oidcClientSecret ?? '';
+    if (!raw.startsWith('v1:')) return raw;
+    try {
+      return decryptSecret(raw, this.stateSecret);
+    } catch {
+      throw new UnauthorizedException('Client secret SSO tidak bisa dibaca (APP_SECRET berubah?)');
+    }
   }
 
   private async getProvider(id: string, workspaceId: string): Promise<ProviderRow> {
@@ -256,7 +268,7 @@ export class OidcService {
       code,
       redirect_uri: `${this.appUrl}/api/plus/sso/callback`,
       client_id: provider.oidcClientId as string,
-      client_secret: provider.oidcClientSecret as string,
+      client_secret: this.clientSecretOf(provider),
     });
 
     const tokenRes = await fetch(meta.token_endpoint, {

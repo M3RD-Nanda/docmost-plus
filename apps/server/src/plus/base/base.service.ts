@@ -194,7 +194,9 @@ export class BaseService {
     if (opts.cursor) q = q.where('position', '>', opts.cursor);
 
     const items = await q.execute();
-    return { items, nextCursor: items.length === limit ? items[items.length - 1]?.position : null };
+    // ponytail: saat sorting, posisi bukan lagi kursor valid — jangan janjikan halaman berikut.
+    const nextCursor = !opts.sort && items.length === limit ? items[items.length - 1]?.position : null;
+    return { items, nextCursor };
   }
 
   async addRow(

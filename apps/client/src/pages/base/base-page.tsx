@@ -47,8 +47,10 @@ const TYPES = [
   { value: "checkbox", label: "Centang" },
 ];
 
-export default function BasePage() {
-  const { pageId = "" } = useParams();
+export default function BasePage({ pageId: pageIdProp }: { pageId?: string } = {}) {
+  const { pageId: routePageId } = useParams();
+  const pageId = pageIdProp ?? routePageId ?? "";
+  const [pageTitle, setPageTitle] = useState<string>("");
 
   const [properties, setProperties] = useState<BaseProperty[]>([]);
   const [rows, setRows] = useState<BaseRow[]>([]);
@@ -65,6 +67,7 @@ export default function BasePage() {
     try {
       const schema = await getBase(pageId);
       setProperties(schema.properties ?? []);
+      setPageTitle((schema.page as any)?.title ?? "");
       const data = await listRows(pageId);
       setRows(data.items ?? []);
       const kanban = (schema.views ?? []).find((v) => v.type === "kanban");
@@ -152,7 +155,7 @@ export default function BasePage() {
       <Stack gap="md">
         <Group justify="space-between">
           <Group gap="sm">
-            <Title order={3}>Basis</Title>
+            <Title order={3}>{pageTitle || "Basis"}</Title>
             <Badge variant="light">{rows.length} baris</Badge>
             {loading && <Badge color="gray">memuat…</Badge>}
           </Group>
