@@ -285,10 +285,12 @@ export class OidcService {
     const { payload } = await jwtVerify(tokenJson.id_token, jwks, {
       issuer: meta.issuer ?? provider.oidcIssuer ?? undefined,
       audience: provider.oidcClientId as string,
+    }).catch(() => {
+      throw new UnauthorizedException('id_token tidak valid (tanda tangan/issuer/audience)');
     });
     if (payload.nonce && payload.nonce !== decoded.n) {
-      // nonce dikirim via state; IdP wajib mengembalikannya bila diminta
-      this.logger.warn('nonce id_token tidak cocok dengan state');
+      // nonce wajib cocok: mencegah id_token dari alur lain dipakai ulang
+      throw new UnauthorizedException('nonce id_token tidak cocok');
     }
 
     const email = String(payload.email ?? '').toLowerCase();

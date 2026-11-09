@@ -229,7 +229,12 @@ export class MfaService {
 
   /** Langkah kedua login: mfaToken (5 menit) + kode → sesi penuh. */
   async verify(dto: { mfaToken: string; code: string }) {
-    const payload = await this.tokenService.verifyJwt(dto.mfaToken, 'mfa_token');
+    // Token kedaluwarsa/rusak harus 401, bukan 500 — jangan bocorkan detail JWT.
+    const payload = await this.tokenService
+      .verifyJwt(dto.mfaToken, 'mfa_token')
+      .catch(() => {
+        throw new UnauthorizedException('Sesi MFA kedaluwarsa, silakan login ulang');
+      });
 
     const user = await this.userRepo.findById(payload.sub, payload.workspaceId);
     if (!user || isUserDisabled(user)) {
