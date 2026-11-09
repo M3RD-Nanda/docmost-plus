@@ -1,4 +1,4 @@
-import { Group, List, Stack, Table, Text, ThemeIcon } from "@mantine/core";
+import { Alert, Group, List, Stack, Table, Text, ThemeIcon } from "@mantine/core";
 import { IconCheck } from "@tabler/icons-react";
 
 const enterpriseFeatures = [
@@ -57,7 +57,13 @@ export default function OssDetails() {
       </Table.ScrollContainer>
 
       <Stack gap="md">
-        <Text fw={500}>Upgrade to the Enterprise Edition to unlock:</Text>
+        {/* plus: fitur ini aktif di fork ini tanpa lisensi — jangan tampilkan seolah terkunci */}
+        <Alert color="green" variant="light">
+          Edisi Open Source + fitur Plus: MFA, SSO OIDC, API keys, AI &amp; MCP, Bases, Kanban,
+          pencarian lampiran PDF/DOCX sudah aktif tanpa lisensi.
+        </Alert>
+
+        <Text fw={500}>Fitur yang hanya ada di Docmost Enterprise resmi:</Text>
 
         <List
           spacing={4}

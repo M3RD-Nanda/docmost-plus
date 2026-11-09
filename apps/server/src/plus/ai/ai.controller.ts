@@ -1,4 +1,9 @@
 import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
+import { SkipThrottle, ThrottlerGuard } from '@nestjs/throttler';
+import {
+  ALL_NAMED_THROTTLERS_SKIPPED,
+  AI_CHAT_THROTTLER,
+} from '../../integrations/throttle/throttler-names';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { AuthUser } from '../../common/decorators/auth-user.decorator';
 import { AuthWorkspace } from '../../common/decorators/auth-workspace.decorator';
@@ -18,6 +23,8 @@ class ChatDto {
 }
 
 @UseGuards(JwtAuthGuard)
+@SkipThrottle({ ...ALL_NAMED_THROTTLERS_SKIPPED, [AI_CHAT_THROTTLER]: false })
+@UseGuards(ThrottlerGuard)
 @Controller('plus/ai')
 export class AiController {
   constructor(private readonly aiService: AiService) {}
